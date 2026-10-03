@@ -2,8 +2,14 @@ package tunnelproto
 
 import (
 	"context"
+	"crypto/sha256"
+	"crypto/subtle"
+	"crypto/tls"
+	"encoding/hex"
+	"errors"
 	"io"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -89,4 +95,30 @@ func ClientSession(ctx context.Context, c *websocket.Conn) (*Session, error) {
 		return nil, err
 	}
 	return &Session{Session: s, conn: nc}, nil
+}
+
+// PinnedTLS returns a TLS configuration that accepts exactly the certificate with the given
+// SHA-256 (hex) and nothing else, regardless of names or issuers.
+func PinnedTLS(certSHA256 string) *tls.Config {
+	want := strings.ToLower(certSHA256)
+	return &tls.Config{
+		MinVersion:         tls.VersionTLS13,
+		InsecureSkipVerify: true, // replaced by the pin check below
+		VerifyConnection: func(cs tls.ConnectionState) error {
+			if len(cs.PeerCertificates) == 0 {
+				return errors.New("tunnelproto: no server certificate")
+			}
+			sum := sha256.Sum256(cs.PeerCertificates[0].Raw)
+			if subtle.ConstantTimeCompare([]byte(hex.EncodeToString(sum[:])), []byte(want)) != 1 {
+				return errors.New("tunnelproto: server certificate does not match the pinned fingerprint")
+			}
+			return nil
+		},
+	}
+}
+
+// CertSHA256 is the pin of a DER certificate.
+func CertSHA256(der []byte) string {
+	sum := sha256.Sum256(der)
+	return hex.EncodeToString(sum[:])
 }

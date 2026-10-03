@@ -54,6 +54,17 @@ type Config struct {
 	Tunnels          []Tunnel `json:"tunnels"`
 	CanRequest       bool     `json:"canRequest"`
 	MinClientVersion string   `json:"minClientVersion,omitempty"`
+	// Direct, when set, offers a faster path that bypasses the reverse proxy (协议.md §4.5).
+	Direct *DirectEndpoint `json:"direct,omitempty"`
+}
+
+// DirectEndpoint is the server's direct TLS listener. Its certificate is self-signed; the device
+// pins CertSHA256, which it learned over an already authenticated session.
+type DirectEndpoint struct {
+	// Addr is host:port to dial.
+	Addr string `json:"addr"`
+	// CertSHA256 is the lowercase hex SHA-256 of the leaf certificate (DER).
+	CertSHA256 string `json:"certSha256"`
 }
 
 // Tunnel is what a device needs to know about one of its tunnels.
