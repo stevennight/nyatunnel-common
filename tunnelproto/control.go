@@ -28,6 +28,8 @@ const (
 	TunnelHTTPS = "https"
 	TunnelTCP   = "tcp"
 	TunnelUDP   = "udp"
+	// TunnelTCPUDP opens one remote port for both TCP and UDP; data streams say which in StreamHeader.Proto.
+	TunnelTCPUDP = "tcpudp"
 )
 
 // maxControlMessage bounds one control message.
