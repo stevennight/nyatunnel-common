@@ -113,6 +113,9 @@ const (
 	StateRunning = "running"
 	StatePaused  = "paused"
 	StateError   = "error"
+	// StateUnconfirmed: the tunnel is active on the server but the device owner has not yet
+	// confirmed its current local target on the device, so the device refuses its streams.
+	StateUnconfirmed = "unconfirmed"
 )
 
 // Status reports the local state of a tunnel.

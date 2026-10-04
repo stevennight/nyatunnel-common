@@ -9,7 +9,8 @@ import (
 )
 
 // StreamHeader opens every data stream (协议.md §4.4). It never carries the local target: the device
-// looks it up in its current Config, so the server cannot make a device dial arbitrary addresses.
+// looks it up in its current Config and only dials targets its owner confirmed on the device
+// (协议.md §4.6), so not even a compromised server can make a device dial arbitrary addresses.
 type StreamHeader struct {
 	TunnelID   string `json:"tunnelId"`
 	Proto      string `json:"proto"` // "tcp" (also used for HTTPS tunnels) or "udp"
@@ -25,6 +26,7 @@ const (
 	ReplyInactive      StreamReply = 2 // paused, disabled or expired on the device
 	ReplyDialFailed    StreamReply = 3 // the local service did not accept the connection
 	ReplyForbidden     StreamReply = 4 // the local target violates the tunnel's permissions
+	ReplyUnconfirmed   StreamReply = 5 // the device owner has not confirmed this tunnel's local target
 )
 
 func (r StreamReply) Error() string {
@@ -39,6 +41,8 @@ func (r StreamReply) Error() string {
 		return "local service unreachable"
 	case ReplyForbidden:
 		return "local target not allowed"
+	case ReplyUnconfirmed:
+		return "tunnel not confirmed on the device"
 	default:
 		return fmt.Sprintf("stream reply %d", byte(r))
 	}
